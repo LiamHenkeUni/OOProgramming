@@ -14,24 +14,20 @@ class Player:
         self._chips = 0
         self._games_played = 0
         self._games_won = 0
-        
+
     @property
     def name(self):
         return self._name
-    
+
     def increase_chips(self, amount):
         self._chips += amount
-    
+
     def decrease_chips(self, amount):
         if self._chips >= amount:
             self._chips -= amount
-        
+
     def increase_games_played(self):
         self._games_played += 1
-        
+
     def increase_games_won(self):
         self._games_won += 1
-
-@property
-def chips(self):
-    return self._chips
