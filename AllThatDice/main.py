@@ -10,7 +10,7 @@
 
 from player import Player
 from all_that_dice import OddOrEvenGame, MaxiGame, BuncoGame
-from AllThatDice.leaderboard import Leaderboard
+from leaderboard import Leaderboard
 
 class AllThatDice:
     def __init__(self):
