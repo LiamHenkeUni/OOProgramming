@@ -21,7 +21,7 @@ class OddOrEvenGame(Game):
 
     def determine_winner(self):
         for player in self.players:
-            strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+            strength = self.get_throw_strength(player)
             die_value, symbol = self.throw_die(strength)
             print(f"{player.name} guessed {self.guess[player]}, rolled {symbol} ({die_value})")
             if (die_value % 2 == 0 and self.guess[player] == 'e') or (die_value % 2 != 0 and self.guess[player] == 'o'):
@@ -32,13 +32,24 @@ class OddOrEvenGame(Game):
                 print(f"Sorry, {player.name}! You lose.")
         self.end_game()
 
+    def get_throw_strength(self, player):
+        while True:
+            try:
+                strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+                if 0 <= strength <= 5:
+                    return strength
+                else:
+                    print("Strength must be between 0 and 5.")
+            except ValueError:
+                print("Invalid input. Please enter a number between 0 and 5.")
+
 class MaxiGame(Game):
     def determine_winner(self):
         max_sum = 0
         winners = []
 
         for player in self.players:
-            strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+            strength = self.get_throw_strength(player)
             die1_value, die1_symbol = self.throw_die(strength)
             die2_value, die2_symbol = self.throw_die(strength)
             total = die1_value + die2_value
@@ -58,10 +69,21 @@ class MaxiGame(Game):
             self.determine_winner()
         else:
             winner = winners[0]
-            winner.add_chips(sum(self.bids.values()))
+            winner.add_chips(self.bids[winner] + sum(bid for player, bid in self.bids.items() if player != winner))
             print(f"Congratulations, {winner.name}! You win!")
             winner.increment_games_won()
         self.end_game()
+
+    def get_throw_strength(self, player):
+        while True:
+            try:
+                strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+                if 0 <= strength <= 5:
+                    return strength
+                else:
+                    print("Strength must be between 0 and 5.")
+            except ValueError:
+                print("Invalid input. Please enter a number between 0 and 5.")
 
 class BuncoGame(Game):
     def __init__(self):
@@ -69,48 +91,86 @@ class BuncoGame(Game):
         self.rounds = 6
         self.scores = {}
         self.buncos = {}
+        self.bids = {}
 
     def add_player(self, player, bid):
         super().add_player(player, bid)
         self.scores[player] = [0] * self.rounds
         self.buncos[player] = 0
+        self.bids[player] = bid
+
+    def set_bid(self, player, bid):
+        self.bids[player] = bid
 
     def play_round(self):
         for round_num in range(1, self.rounds + 1):
+            round_scores = {}  # Dictionary to store scores for each player in this round
+            print("=" * 34)
+            print(f"Round {round_num}")
+            print("=" * 34)
             for player in self.players:
                 points = 0
                 while True:
-                    strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+                    strength = self.get_throw_strength(player)
                     die1_value, die1_symbol = self.throw_die(strength)
                     die2_value, die2_symbol = self.throw_die(strength)
                     die3_value, die3_symbol = self.throw_die(strength)
+
+                    # Calculate points for this roll
                     round_points = 0
-                    if die1_value == die2_value == die3_value:
-                        if die1_value == round_num:
-                            round_points = 21
-                            self.buncos[player] += 1
-                        else:
-                            round_points = 5
+                    if die1_value == die2_value == die3_value == round_num:
+                        round_points = 21
+                        self.buncos[player] += 1
+                    elif die1_value == die2_value == die3_value:
+                        round_points = 5
                     elif die1_value == round_num or die2_value == round_num or die3_value == round_num:
                         round_points = 1
 
                     points += round_points
-                    if round_points == 0:
+
+                    # Print dice values and score for this roll
+                    print(f"{player.name} rolled: {die1_symbol}, {die2_symbol}, {die3_symbol} for a score of {round_points}")
+
+                    # Check if player scores points and allow them to roll again
+                    if round_points == 0 or round_num == self.rounds:
+                        print(f"You earned {round_points}, {points} points in total.")
                         break
-                self.scores[player][round_num-1] = points
-                print(f"{player.name} rolled {die1_symbol}, {die2_symbol}, {die3_symbol} and scored {points} points in round {round_num}")
+
+                round_scores[player] = points
+
+            # Update scores for this round
+            for player, points in round_scores.items():
+                self.scores[player][round_num - 1] = points
+                
 
     def determine_winner(self):
-        max_points = 0
-        winner = None
-        for player, scores in self.scores.items():
-            total_points = sum(scores)
-            if total_points > max_points:
-                max_points = total_points
-                winner = player
+        total_scores = {player: sum(scores) for player, scores in self.scores.items()}
+        max_score = max(total_scores.values())
+        winners = [player for player, score in total_scores.items() if score == max_score]
 
-        if winner:
-            winner.add_chips(sum(self.bids.values()))
-            print(f"Congratulations, {winner.name}! You win the Bunco game!")
+        print("=" * 34)
+        print("Game Summary")
+        print("=" * 34)
+        for player in self.players:
+            print(f"{player.name} total score: {total_scores[player]} with {self.buncos[player]} Buncos")
+        print("=" * 34)
+
+        if len(winners) == 1:
+            winner = winners[0]
+            # Add the winner's bid amount to their total chips
+            winner.add_chips(self.bids[winner] + sum(bid for player, bid in self.bids.items() if player != winner))
+            print(f"Congratulations, {winner.name}! You win with a total score of {max_score} and {self.buncos[winner]} Buncos!")
             winner.increment_games_won()
-        self.end_game()
+        else:
+            print("It's a tie!")
+
+    def get_throw_strength(self, player):
+        while True:
+            try:
+                strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+                if 0 <= strength <= 5:
+                    return strength
+                else:
+                    print("Strength must be between 0 and 5.")
+            except ValueError:
+                print("Invalid input. Please enter a number between 0 and 5.")
