@@ -19,6 +19,18 @@ class Player:
     def name(self):
         return self._name
 
+    @property
+    def chips(self):
+        return self._chips
+
+    @property
+    def games_played(self):
+        return self._games_played
+
+    @property
+    def games_won(self):
+        return self._games_won
+
     def increase_chips(self, amount):
         self._chips += amount
 
