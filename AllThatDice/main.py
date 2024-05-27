@@ -10,6 +10,7 @@
 
 from player import Player
 from all_that_dice import OddOrEvenGame, MaxiGame, BuncoGame
+from AllThatDice.leaderboard import Leaderboard
 
 class AllThatDice:
     def __init__(self):
@@ -25,13 +26,7 @@ class AllThatDice:
             print(f"Welcome, {name}!")
 
     def show_leader_board(self):
-        sorted_players = sorted(self.players.values(), key=lambda p: (-p.chips, -(p.games_won / p.games_played if p.games_played > 0 else 0)))
-        print("=============================")
-        print("Name Played Won Chips")
-        print("=============================")
-        for player in sorted_players:
-            print(f"{player.name} {player.games_played} {player.games_won} {player.chips}")
-        print("=============================")
+        Leaderboard.show(self.players)
 
     def play_game(self):
         game_choice = input("Which game would you like to play? (o) Odd-or-Even, (m) Maxi, (b) Bunco: ")
