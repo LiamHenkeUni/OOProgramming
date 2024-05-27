@@ -8,18 +8,6 @@
 #    the University's Academic Misconduct Policy.
 #
 
-
-#
-# File: gameTest.py
-# Description: Main test file for dice game.
-# Author: Liam Henke
-# Student ID: 110377752
-# Email ID: henld003
-# This is my own work as defined by 
-#    the University's Academic Misconduct Policy.
-#
-
-
 import unittest
 from player import Player
 from game import Game
