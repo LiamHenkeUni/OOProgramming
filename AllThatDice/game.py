@@ -8,32 +8,31 @@
 #    the University's Academic Misconduct Policy.
 #
 
-import random
+from die import Die
 
 class Game:
-    def play(self, player):
-        pass
+    def __init__(self):
+        self.players = []
+        self.bids = {}
 
-class OddOrEven(Game):
-    def play(self, player):
-        print(f"{player.name} is playing OddOrEven game...")
-        dice_roll = random.randint(1, 6)
-        print(f"Dice rolled: {dice_roll}")
-        if dice_roll % 2 == 0:
-            print("Even wins!")
-            return player.name
+    def add_player(self, player, bid):
+        if player.chips >= bid:
+            self.players.append(player)
+            self.bids[player] = bid
+            player.deduct_chips(bid)
         else:
-            print("Odd wins!")
-            return None
+            print(f"{player.name} doesn't have enough chips.")
 
-class Maxi(Game):
-    def play(self, player):
-        print(f"{player.name} is playing Maxi game...")
-        dice_rolls = [random.randint(1, 6) for _ in range(3)]
-        print(f"Dice rolled: {dice_rolls}")
-        if sum(dice_rolls) > 10:
-            print(f"{player.name} wins!")
-            return player.name
-        else:
-            print(f"{player.name} loses!")
-            return None
+    def start_game(self):
+        for player in self.players:
+            player.increment_games_played()
+
+    def end_game(self):
+        self.players = []
+        self.bids = {}
+
+    def throw_die(self, strength):
+        die = Die()
+        die_value = die.roll(strength)
+        symbol = die.get_symbol()
+        return die_value, symbol

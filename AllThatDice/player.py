@@ -10,36 +10,29 @@
 
 class Player:
     def __init__(self, name):
-        self._name = name
-        self._chips = 0
-        self._games_played = 0
-        self._games_won = 0
+        self.name = name
+        self.chips = 100
+        self.games_played = 0
+        self.games_won = 0
 
-    @property
-    def name(self):
-        return self._name
+    def place_bid(self, chips):
+        if chips <= self.chips:
+            self.chips -= chips
+            return chips
+        else:
+            return 0
 
-    @property
-    def chips(self):
-        return self._chips
+    def add_chips(self, amount):
+        self.chips += amount
 
-    @property
-    def games_played(self):
-        return self._games_played
+    def deduct_chips(self, amount):
+        self.chips -= amount
 
-    @property
-    def games_won(self):
-        return self._games_won
+    def increment_games_played(self):
+        self.games_played += 1
 
-    def increase_chips(self, amount):
-        self._chips += amount
+    def increment_games_won(self):
+        self.games_won += 1
 
-    def decrease_chips(self, amount):
-        if self._chips >= amount:
-            self._chips -= amount
-
-    def increase_games_played(self):
-        self._games_played += 1
-
-    def increase_games_won(self):
-        self._games_won += 1
+    def __str__(self):
+        return f"{self.name} - Chips: {self.chips}, Games Played: {self.games_played}, Games Won: {self.games_won}"

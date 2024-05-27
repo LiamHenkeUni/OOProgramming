@@ -9,73 +9,108 @@
 #    the University's Academic Misconduct Policy.
 #
 
-from player import Player
-from game import OddOrEven, Maxi
+from game import Game
 
-class AllThatDice:
+class OddOrEvenGame(Game):
     def __init__(self):
-        self.players = []
-        self.total_games_played = 0
+        super().__init__()
+        self.guess = {}
 
-    def run(self):
-        print("Welcome to All-That-Dice!")
-        self.add_player()
-        self.main_menu()
+    def set_guess(self, player, guess):
+        self.guess[player] = guess
 
-    def add_player(self):
-        name = input("Enter player name: ")
-        player = Player(name)
-        self.players.append(player)
-        print(f"Player {name} has been added.")
-
-    def main_menu(self):
-        while True:
-            print("\nMain Menu")
-            print("1. Play OddOrEven")
-            print("2. Play Maxi")
-            print("3. Show Player Info")
-            print("4. Show Total Games Played")
-            print("5. Exit")
-            choice = input("Choose an option: ")
-            
-            if choice == '1':
-                self.play_game(OddOrEven())
-            elif choice == '2':
-                self.play_game(Maxi())
-            elif choice == '3':
-                self.show_player_info()
-            elif choice == '4':
-                self.show_total_games_played()
-            elif choice == '5':
-                break
-            else:
-                print("Invalid choice. Please try again.")
-
-    def show_player_info(self):
+    def determine_winner(self):
         for player in self.players:
-            print(f"Player: {player.name}, Chips: {player.chips}, Games Played: {player.games_played}, Games Won: {player.games_won}")
-
-    def increase_total_games_played(self):
-        self.total_games_played += 1
-        for player in self.players:
-            player.increase_games_played()
-
-    def show_total_games_played(self):
-        print(f"Total games played: {self.total_games_played}")
-
-    def play_game(self, game):
-        print("\nChoose a player for the game:")
-        for i, player in enumerate(self.players):
-            print(f"{i+1}. {player.name}")
-        choice = int(input("Enter the number of the player: ")) - 1
-        if 0 <= choice < len(self.players):
-            player = self.players[choice]
-            winner = game.play(player)
-            self.increase_total_games_played()
-            if winner == player.name:
-                player.increase_games_won()
-                print(f"{player.name} has won the game!")
+            strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+            die_value, symbol = self.throw_die(strength)
+            print(f"{player.name} guessed {self.guess[player]}, rolled {symbol} ({die_value})")
+            if (die_value % 2 == 0 and self.guess[player] == 'e') or (die_value % 2 != 0 and self.guess[player] == 'o'):
+                player.add_chips(sum(self.bids.values()))
+                print(f"Congratulations, {player.name}! You win!")
+                player.increment_games_won()
             else:
-                print(f"{player.name} has lost the game!")
+                print(f"Sorry, {player.name}! You lose.")
+        self.end_game()
+
+class MaxiGame(Game):
+    def determine_winner(self):
+        max_sum = 0
+        winners = []
+
+        for player in self.players:
+            strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+            die1_value, die1_symbol = self.throw_die(strength)
+            die2_value, die2_symbol = self.throw_die(strength)
+            total = die1_value + die2_value
+            print(f"{player.name} rolled {die1_symbol} ({die1_value}) and {die2_symbol} ({die2_value}) for a total of {total}")
+
+            if total > max_sum:
+                max_sum = total
+                winners = [player]
+            elif total == max_sum:
+                winners.append(player)
+
+        if len(winners) > 1:
+            print("Tie! Rolling again.")
+            for player in winners:
+                self.players.remove(player)
+                self.add_player(player, self.bids[player])
+            self.determine_winner()
         else:
-            print("Invalid choice.")
+            winner = winners[0]
+            winner.add_chips(sum(self.bids.values()))
+            print(f"Congratulations, {winner.name}! You win!")
+            winner.increment_games_won()
+        self.end_game()
+
+class BuncoGame(Game):
+    def __init__(self):
+        super().__init__()
+        self.rounds = 6
+        self.scores = {}
+        self.buncos = {}
+
+    def add_player(self, player, bid):
+        super().add_player(player, bid)
+        self.scores[player] = [0] * self.rounds
+        self.buncos[player] = 0
+
+    def play_round(self):
+        for round_num in range(1, self.rounds + 1):
+            for player in self.players:
+                points = 0
+                while True:
+                    strength = int(input(f"How strong will you throw, {player.name}? (0-5) "))
+                    die1_value, die1_symbol = self.throw_die(strength)
+                    die2_value, die2_symbol = self.throw_die(strength)
+                    die3_value, die3_symbol = self.throw_die(strength)
+                    round_points = 0
+                    if die1_value == die2_value == die3_value:
+                        if die1_value == round_num:
+                            round_points = 21
+                            self.buncos[player] += 1
+                        else:
+                            round_points = 5
+                    elif die1_value == round_num or die2_value == round_num or die3_value == round_num:
+                        round_points = 1
+
+                    points += round_points
+                    if round_points == 0:
+                        break
+                self.scores[player][round_num-1] = points
+                print(f"{player.name} rolled {die1_symbol}, {die2_symbol}, {die3_symbol} and scored {points} points in round {round_num}")
+
+    def determine_winner(self):
+        max_points = 0
+        winner = None
+        for player, scores in self.scores.items():
+            total_points = sum(scores)
+            if total_points > max_points:
+                max_points = total_points
+                winner = player
+
+        if winner:
+            winner.add_chips(sum(self.bids.values()))
+            print(f"Congratulations, {winner.name}! You win the Bunco game!")
+            winner.increment_games_won()
+        self.end_game()
